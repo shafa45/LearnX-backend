@@ -1,5 +1,7 @@
 import User from '../models/user';
 import { hashPassword, comparePassword } from '../utils/auth';
+import jwt from 'jsonwebtoken';
+
 export const register = async (req, res) => {
   try {
     //   console.log(req.body);
@@ -37,6 +39,51 @@ export const register = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({
+      message: 'Server Error',
+    });
+  }
+};
+
+export const login = async (req, res) => {
+  try {
+    // console.log(req.body);
+    // check if user exists
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      return res.status(400).json({
+        message: 'User does not exist',
+      });
+    }
+    // check if password is correct
+    const isMatch = await comparePassword(req.body.password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        message: 'Incorrect password',
+      });
+    }
+    // generate token
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '7d',
+    });
+
+    // send user and token to client
+    user.password = undefined;
+
+    // send token as cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+      secure: true, // only send cookie over https
+    });
+
+    // send response
+    res.status(200).json({
+      message: 'User logged in successfully',
+      user,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
       message: 'Server Error',
     });
   }
