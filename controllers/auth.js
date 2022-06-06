@@ -2,6 +2,7 @@ import User from '../models/user';
 import { hashPassword, comparePassword } from '../utils/auth';
 import jwt from 'jsonwebtoken';
 import AWS from 'aws-sdk';
+import { nanoid } from 'nanoid';
 
 const awsConfig = {
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -164,4 +165,117 @@ export const sendEmail = async (req, res) => {
         message: 'Error sending email',
       });
     });
+}; // sendEmail
+
+export const forgotPassword = async (req, res) => {
+  try {
+    // console.log(req.body.email);
+    const shortCode = nanoid(6);
+    const user = await User.findOneAndUpdate(
+      { email: req.body.email },
+      {
+        $set: {
+          passwordResetToken: shortCode,
+          passwordResetExpires: Date.now() + 3600000, // 1 hour
+        },
+      },
+      { new: true }
+    );
+    if (!user) {
+      return res.status(400).json({
+        message: 'User does not exist',
+        success: false,
+      });
+    }
+
+    // email options
+    const params = {
+      Source: process.env.EMAIL_FROM,
+      Destination: {
+        ToAddresses: [req.body.email],
+      },
+      ReplyToAddresses: [process.env.EMAIL_FROM],
+      Message: {
+        Subject: {
+          Data: 'Reset Password',
+          Charset: 'UTF-8',
+        },
+        Body: {
+          Html: {
+            Data: `<html>
+            <body>
+            <h1>Password Reset Code</h1>
+            <p>Please use the following code to reset your password</p>
+            <h2 style='color:red;'>${shortCode}</h2>
+            <p>This code will expire in 1 hour</p>
+            <footer> <i style='color: teal; font-size: 20px; font-weight: bold;'> LearnX  </i>${new Date().getFullYear()} | All rights reserved &copy;  </footer>
+            </body>
+            </html>`,
+            Charset: 'UTF-8',
+          },
+        },
+      },
+    };
+
+    // send email
+    const emailSent = SES.sendEmail(params).promise();
+    emailSent
+      .then((data) => {
+        console.log(data);
+        res.status(200).json({
+          message: 'Email sent successfully',
+          success: true,
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(400).json({
+          message: 'Error sending email',
+          success: false,
+        });
+      });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: 'Server Error',
+      success: false,
+    });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const hashedPassword = await hashPassword(req.body.newPassword);
+    const user = await User.findOneAndUpdate(
+      {
+        email: req.body.email,
+        passwordResetToken: req.body.code,
+        passwordResetExpires: { $gt: Date.now() },
+      },
+      {
+        $set: {
+          password: hashedPassword,
+          passwordResetToken: '',
+          passwordResetExpires: '',
+        },
+      },
+      { new: true }
+    );
+    if (!user) {
+      return res.status(400).json({
+        message: 'Invalid token',
+        success: false,
+      });
+    }
+    return res.status(200).json({
+      message: 'Password reset successfully',
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: 'Server Error',
+      success: false,
+    });
+  }
 };

@@ -33,6 +33,8 @@ const userSchema = new mongoose.Schema(
     stripe_account_id: '',
     stripe_seller: {},
     stripeSession: {},
+    passwordResetToken: String,
+    passwordResetExpires: Date,
   },
   { timestamps: true }
 );
