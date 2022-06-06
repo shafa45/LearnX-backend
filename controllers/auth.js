@@ -107,11 +107,10 @@ export const currentUser = async (req, res) => {
   try {
     const user = await User.findById(req.auth._id).select('-password');
     // console.log('CURRENT_USER', user);
-    return res.json(user);
+    return res.json({
+      success: true,
+    });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({
-      message: 'Server Error',
-    });
   }
 };
