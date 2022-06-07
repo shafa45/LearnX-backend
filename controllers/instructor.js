@@ -1,6 +1,7 @@
 import User from '../models/user';
-import stripe from 'stripe';
+
 import queryString from 'query-string';
+const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 export const makeInstructor = async (req, res) => {
   try {
@@ -11,17 +12,25 @@ export const makeInstructor = async (req, res) => {
     if (!user.stripe_account_id) {
       const account = await stripe.accounts.create({
         type: 'express',
+        country: 'US',
+        capabilities: {
+          card_payments: { requested: true },
+          transfers: { requested: true },
+        },
       });
-      console.log('ACCOUNT => ', account.id);
+
+      console.log('ACCOUNT ID => ', account.id);
+
       user.stripe_account_id = account.id;
       await user.save();
     }
 
     // 3. create account link based on account id  (for frontent to complete onboarding process)
-    const accountLink = await stripe.accountLinks.create({
+    let accountLink = await stripe.accountLinks.create({
       account: user.stripe_account_id,
       refresh_url: `${process.env.STRIPE_REDIRECT_URL}/stripe/connect`,
       return_url: `${process.env.STRIPE_REDIRECT_URL}/stripe/connect`,
+
       type: 'account_onboarding',
     });
 
@@ -33,7 +42,7 @@ export const makeInstructor = async (req, res) => {
     // 5. then send the account link as response to frontend
     return res.status(200).json({
       accountLink: `${accountLink.url}?${queryString.stringify(accountLink)}`,
-      message: 'Instructor created successfully',
+      //   message: 'Instructor created successfully',
     });
   } catch (error) {
     console.log(error);
