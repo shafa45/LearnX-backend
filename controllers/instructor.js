@@ -51,3 +51,32 @@ export const makeInstructor = async (req, res) => {
     });
   }
 };
+
+export const getAccountStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.auth._id);
+    const account = await stripe.accounts.retrieve(user.stripe_account_id);
+    console.log('Account:', account);
+    if (!account.charges_enabled) {
+      return res.status(400).json({
+        message: 'Account not enabled',
+      });
+    } else {
+      const statusUpdated = await User.findByIdAndUpdate(
+        req.auth._id,
+        {
+          stripe_seller: account,
+          $addToSet: { role: 'Instructor' },
+        },
+        { new: true }
+      ).select('-password');
+
+      return res.status(200).json({
+        message: 'Account enabled',
+        statusUpdated,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
