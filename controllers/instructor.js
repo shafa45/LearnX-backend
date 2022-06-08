@@ -56,7 +56,7 @@ export const getAccountStatus = async (req, res) => {
   try {
     const user = await User.findById(req.auth._id);
     const account = await stripe.accounts.retrieve(user.stripe_account_id);
-    console.log('Account:', account);
+    // console.log('Account:', account);
     if (!account.charges_enabled) {
       return res.status(400).json({
         message: 'Account not enabled',
@@ -74,6 +74,22 @@ export const getAccountStatus = async (req, res) => {
       return res.status(200).json({
         message: 'Account enabled',
         statusUpdated,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export const currentInstructor = async (req, res) => {
+  try {
+    const user = await User.findById(req.auth._id).select('-password');
+
+    if (!user.role.includes('Instructor')) {
+      return res.status(403);
+    } else {
+      return res.status(200).json({
+        success: true,
       });
     }
   } catch (err) {
