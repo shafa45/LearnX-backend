@@ -86,7 +86,7 @@ export const currentInstructor = async (req, res) => {
     const user = await User.findById(req.auth._id).select('-password');
 
     if (!user.role.includes('Instructor')) {
-      return res.status(403);
+      return res.sendStatus(403);
     } else {
       return res.status(200).json({
         success: true,
