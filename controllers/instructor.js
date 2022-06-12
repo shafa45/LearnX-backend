@@ -1,4 +1,5 @@
 import User from '../models/user';
+import Course from '../models/course';
 
 import queryString from 'query-string';
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
@@ -92,6 +93,20 @@ export const currentInstructor = async (req, res) => {
         success: true,
       });
     }
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export const instructorCourses = async (req, res) => {
+  try {
+    const courses = await Course.find({ instructor: req.auth._id }).sort({
+      createdAt: -1,
+    });
+
+    res.status(200).json({
+      courses,
+    });
   } catch (err) {
     console.log(err);
   }

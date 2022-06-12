@@ -107,3 +107,21 @@ export const create = async (req, res) => {
     return res.status(400).send('Course create failed. Try again.');
   }
 };
+
+export const read = async (req, res) => {
+  try {
+    const course = await Course.findOne({
+      slug: req.params.slug,
+    }).populate('instructor', '_id name');
+
+    if (!course) {
+      return res.status(404).json({
+        message: 'Course not found',
+      });
+    }
+    return res.status(200).send(course);
+  } catch (err) {
+    console.log(err);
+    return res.status(400).send('Course read failed. Try again.');
+  }
+};
