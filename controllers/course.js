@@ -155,3 +155,32 @@ export const uploadVideo = async (req, res) => {
     console.log(err);
   }
 };
+
+export const removeVideo = async (req, res) => {
+  try {
+    const { Bucket, Key } = req.body;
+    // console.log(video);
+
+    // if (!video) return res.status(400).send('No video');
+
+    // video params
+    const params = {
+      Bucket,
+      Key,
+    };
+
+    // upload  to s3
+    await S3.deleteObject(params, (err, data) => {
+      if (err) {
+        console.log(err);
+        return res.sendStatus(400);
+      }
+      console.log(data);
+      res.send({
+        success: true,
+      });
+    });
+  } catch (err) {
+    console.log(err);
+  }
+};
