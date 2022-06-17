@@ -193,3 +193,33 @@ export const removeVideo = async (req, res) => {
     console.log(err);
   }
 };
+
+export const addLesson = async (req, res) => {
+  try {
+    const { slug, instructorId } = req.params;
+    const { title, content, video } = req.body;
+
+    if (req.auth._id != req.params.instructorId) {
+      return res.status(401).send('Unauthorized');
+    }
+
+    const updated = await Course.findOneAndUpdate(
+      { slug },
+      {
+        $push: {
+          lessons: {
+            title,
+            content,
+            video,
+          },
+        },
+      },
+      { new: true }
+    ).populate('instructor', '_id name');
+
+    res.json(updated);
+  } catch (err) {
+    console.log(err);
+    return res.status(400).send('Lesson add failed. Try again.');
+  }
+};
