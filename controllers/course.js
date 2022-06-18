@@ -223,3 +223,23 @@ export const addLesson = async (req, res) => {
     return res.status(400).send('Lesson add failed. Try again.');
   }
 };
+
+export const update = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    // console.log(slug);
+    const course = await Course.findOne({ slug });
+    if (req.auth._id != course.instructor) {
+      return res.status(401).send('Unauthorized');
+    }
+
+    const updated = await Course.findOneAndUpdate({ slug }, req.body, {
+      new: true,
+    });
+
+    res.json(updated);
+  } catch (err) {
+    console.log(err);
+    return res.status(400).send(err.message);
+  }
+};
