@@ -18,6 +18,7 @@ import {
   addLesson,
   update,
   removeLesson,
+  updateLesson,
 } from '../controllers/course';
 
 // Image
@@ -38,6 +39,7 @@ router.post('/course/video-remove/:instructorId', requireSignin, removeVideo);
 
 // /api/course/lesson/${slug}/${course.instructor._id}
 router.post('/course/lesson/:slug/:instructorId', requireSignin, addLesson);
+router.put('/course/lesson/:slug/:instructorId', requireSignin, updateLesson);
 router.put('/course/:slug/:lessonId', requireSignin, removeLesson);
 
 module.exports = router;
