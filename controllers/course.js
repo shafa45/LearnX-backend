@@ -302,3 +302,47 @@ export const updateLesson = async (req, res) => {
     return res.status(400).send(error.message);
   }
 };
+
+export const publishCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const course = await Course.findById(courseId).select('instructor');
+
+    if (req.auth._id != course.instructor._id) {
+      return res.status(401).send('Unauthorized');
+    }
+
+    const updated = await Course.findByIdAndUpdate(
+      courseId,
+      { published: true },
+      { new: true }
+    );
+
+    res.json(updated);
+  } catch (error) {
+    console.log(error);
+    return res.status(400).send(error.message);
+  }
+};
+
+export const unpublishCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const course = await Course.findById(courseId).select('instructor');
+
+    if (req.auth._id != course.instructor._id) {
+      return res.status(401).send('Unauthorized');
+    }
+
+    const updated = await Course.findByIdAndUpdate(
+      courseId,
+      { published: false },
+      { new: true }
+    );
+
+    res.json(updated);
+  } catch (error) {
+    console.log(error);
+    return res.status(400).send(error.message);
+  }
+};
