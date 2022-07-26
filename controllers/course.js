@@ -346,3 +346,12 @@ export const unpublishCourse = async (req, res) => {
     return res.status(400).send(error.message);
   }
 };
+
+export const courses = async (req, res) => {
+  const allPublishedCourses = await Course.find({ published: true }).populate(
+    'instructor',
+    '_id name'
+  );
+
+  res.json(allPublishedCourses);
+};
