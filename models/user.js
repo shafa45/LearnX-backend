@@ -35,7 +35,9 @@ const userSchema = new mongoose.Schema(
     stripeSession: {},
     passwordResetToken: String,
     passwordResetExpires: Date,
+    courses: [{ type: mongoose.Types.ObjectId , ref: 'Course' }],
   },
+
   { timestamps: true }
 );
 
