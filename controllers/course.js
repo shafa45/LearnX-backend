@@ -413,8 +413,8 @@ export const paidEnrollment = async (req, res) => {
     // application fee 30%
     const fee = (course.price * 30) / 100;
     // create stripe session
-    const session = await stripe.checkout.session.create({
-      payement_method_types: ['card'],
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
       // purchase details
       line_items: [
         {
