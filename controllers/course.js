@@ -449,3 +449,34 @@ export const paidEnrollment = async (req, res) => {
     return res.status(400).send('Enrollement failed!');
   }
 };
+
+export const stripeSuccess= async (req, res) => {
+  try {
+    // find course 
+    const course = await Course.findById(req.params.courseId);
+    // get user fron db to get stripe session id
+    const user = await User.findById(req.auth._id);
+    // if no stripe session id found return
+    if (!user.stripeSession.id) return res.sendStatus(400);
+    // retrieve stripe session
+    const session = await stripe.checkout.sessions.retrieve(user.stripeSession.id);
+
+    // console.log("STRIPE SUCCESS SESSION => ", session);
+    // if session payment status is paid, push course to user courses array
+    if (session.payment_status === 'paid') {
+      await User.findByIdAndUpdate(req.auth._id, {
+        $addToSet: { courses: course._id },
+        $set: {stripeSession: {}}
+      });
+    }
+
+    res.json({
+      success: true,
+      course
+    })
+
+  } catch (err) {
+    console.log("STRIPE SUCCESS ERROR: ",err)
+    res.json({success: false})
+  }
+}
